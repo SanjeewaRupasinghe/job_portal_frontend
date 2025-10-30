@@ -13,7 +13,9 @@ import {
 } from "@/lib/mockAuth";
 import { API_USER } from "@/lib/api";
 import axiosClient from "@/axios/axiosClient";
-import { User } from "@supabase/supabase-js";
+import Role from "@/types/Role.types";
+import { User } from "@/types/User.types";
+import { id } from "zod/v4/locales";
 
 interface AuthContextType {
   // DEVELOPMENT: Using MockUser type (CHANGE TO User | null IN PRODUCTION)
@@ -51,17 +53,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     // DEVELOPMENT: Mock auth initialization (REPLACE WITH SUPABASE IN PRODUCTION)
-    const checkMockUser = () => {
-      const mockUser = getCurrentMockUser();
-      if (mockUser) {
-        setUser(mockUser);
-        setUserProfile(mockUser.profile);
-        setSession({ user: mockUser }); // Mock session
-      }
-      setLoading(false);
-    };
+    // const checkMockUser = () => {
+    //   const mockUser = getCurrentMockUser();
+    //   if (mockUser) {
+    //     setUser(mockUser);
+    //     setUserProfile(mockUser.profile);
+    //     setSession({ user: mockUser }); // Mock session
+    //   }
+    //   setLoading(false);
+    // };
 
-    checkMockUser();
+    // checkMockUser();
 
     /* PRODUCTION: Uncomment this Supabase auth code
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -95,46 +97,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
 
     return () => subscription.unsubscribe();
-    */
+    
   }, []);
 
   // DEVELOPMENT: Mock auth functions (REPLACE WITH SUPABASE IN PRODUCTION)
   const signIn = async (email: string, password: string) => {
-    const { user: mockUser, error } = await mockSignIn(email, password);
-    if (mockUser) {
-      setUser(mockUser);
-      setUserProfile(mockUser.profile);
-      setSession({ user: mockUser });
-    }
-    return { error };
-  };
-
-  const signUp = async (email: string, password: string, userData?: any) => {
-    let error: any = null;
     try {
-      const response = await axiosClient.post(API_USER.REGISTER, {
+      console.log(email, password);
+      // api call to register user
+      const response = await axiosClient.post(API_USER.LOGIN, {
         email,
         password,
-        password_confirmation: password,
-        ...userData,
       });
-      console.log(response.status, response.data);
+
+      // set user
+      setUser(response.data.data);
+      // set session
+      setSession({ user: response.data.data });
+      console.log('logged in successfully');
+
+      return { error: null };
     } catch (err) {
       console.log(err);
-      // if (err?.status === 422) {
-      // console.log(err?.errors);
-      error = err?.errors;
-      // }
+      // some error
+      console.log(err);
       return { error: err?.errors };
     }
-
-    // const { user: mockUser, error } = await mockSignUp(email, password, userData);
+    // const { user: mockUser, error } = await mockSignIn(email, password);
     // if (mockUser) {
     //   setUser(mockUser);
     //   setUserProfile(mockUser.profile);
     //   setSession({ user: mockUser });
     // }
     // return { error };
+  };
+
+  const signUp = async (email: string, password: string, userData?: any) => {
+    try {
+      // api call to register user
+      await axiosClient.post(API_USER.REGISTER, {
+        email,
+        password,
+        password_confirmation: password,
+        ...userData,
+      });
+      return { error: null };
+    } catch (err) {
+      // some error
+      console.log(err);
+      return { error: err?.errors };
+    }
   };
 
   const signOut = async () => {
