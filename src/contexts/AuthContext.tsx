@@ -35,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
 
+  // get current user
   useEffect(() => {
     const currentUser = getCurrentUser();
     if (currentUser) {
@@ -45,14 +46,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(false);
   }, []);
 
+  // get current user
   const getCurrentUser = (): User | null => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
   };
 
+  // sign in
   const signIn = async (email: string, password: string) => {
     try {
-      // api call to register user
+      // api call
       const response = await axiosClient.post(API_USER.LOGIN, {
         email,
         password,
@@ -70,9 +78,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // sign up
   const signUp = async (email: string, password: string, userData?: any) => {
     try {
-      // api call to register user
+      // api call
       const response = await axiosClient.post(API_USER.REGISTER, {
         email,
         password,
@@ -92,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // make user login
   const makeUserLogin = async (user: User) => {
     // set user
     setUser(user);
@@ -100,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setSession({ user });
   };
 
+  // sign out
   const signOut = async () => {
     localStorage.removeItem("user");
     setUser(null);
@@ -107,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setSession(null);
   };
 
+  // value
   const value = {
     user,
     session,

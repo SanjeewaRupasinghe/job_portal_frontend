@@ -39,37 +39,52 @@ export default function Login() {
     password: "",
   });
 
+  // handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
+    // validate form
     const isValid = validateForm();
-    if (!isValid){
+    if (!isValid) {
       setLoading(false);
       return;
-    } 
+    }
 
     try {
+      // api call to login user
       const { error } = await signIn(email, password);
       if (error) {
+        // some error
         console.log(error);
         setErrors(error?.errors);
         toast.error(error?.message);
       } else {
+        // success
         toast.success("Logged in successfully!");
         navigate("/");
       }
     } catch (err) {
+      // some error
       toast.error("An error occurred during login");
     } finally {
       setLoading(false);
     }
   };
 
+  // validate form
   const validateForm = () => {
+    // reset errors
+    setErrors({
+      email: "",
+      password: "",
+    });
+
+    // validate form
     const emailError = validateIsNotEmpty(email);
     const passwordError = validateIsNotEmpty(password);
 
+    // set errors
     if (emailError || passwordError) {
       setErrors({
         email: emailError,

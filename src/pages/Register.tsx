@@ -53,21 +53,24 @@ export default function Register() {
     agreeToMarketing: false,
   });
 
+  // handle input change
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  const handleSubmit = async (e: React.FormEvent, userType: string) => {
+  // handle submit
+  const handleSubmit = async (e: React.FormEvent, role: string) => {
     e.preventDefault();
-
     setLoading(true);
 
+    // validate password
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords don't match");
       return;
     }
 
+    // validate form
     const isValid = validateForm();
     if (!isValid) {
       setLoading(false);
@@ -75,21 +78,24 @@ export default function Register() {
     }
 
     try {
+      // api call to register user
       const { error } = await signUp(formData.email, formData.password, {
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone,
-        user_type: userType,
+        role: role,
       });
-      console.log(error);
       if (error) {
+        // some error
         setErrors(error);
         toast.error(error?.message);
       } else {
+        // success
         toast.success("Account created successfully!");
         navigate("/");
       }
     } catch (err) {
+      // some error
       toast.error("An error occurred during registration");
     } finally {
       setLoading(false);
@@ -97,12 +103,26 @@ export default function Register() {
   };
 
   const validateForm = () => {
+    // reset errors
+    setErrors({
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      agreeToTerms: false,
+      agreeToMarketing: false,
+    });
+
+    // validate form
     const firstNameError = validateIsNotEmpty(formData.first_name);
     const emailError = validateIsNotEmpty(formData.email);
     const phoneError = validateIsNotEmpty(formData.phone);
     const passwordError = validateIsNotEmpty(formData.password);
     const confirmPasswordError = validateIsNotEmpty(formData.confirmPassword);
 
+    // set errors
     if (
       firstNameError ||
       emailError ||
@@ -165,25 +185,19 @@ export default function Register() {
                 </TabsTrigger>
               </TabsList>
 
-              {["candidate", "employer"].map((userType) => (
-                <TabsContent
-                  key={userType}
-                  value={userType}
-                  className="space-y-4 mt-6"
-                >
+              {["candidate", "employer"].map((role) => (
+                <TabsContent key={role} value={role} className="space-y-4 mt-6">
                   <form
-                    onSubmit={(e) => handleSubmit(e, userType)}
+                    onSubmit={(e) => handleSubmit(e, role)}
                     className="space-y-4"
                   >
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor={`firstName-${userType}`}>
-                          First Name
-                        </Label>
+                        <Label htmlFor={`firstName-${role}`}>First Name</Label>
                         <div className="relative">
                           <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
-                            id={`firstName-${userType}`}
+                            id={`firstName-${role}`}
                             placeholder="John"
                             value={formData.first_name}
                             onChange={(e) =>
@@ -200,11 +214,9 @@ export default function Register() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor={`lastName-${userType}`}>
-                          Last Name
-                        </Label>
+                        <Label htmlFor={`lastName-${role}`}>Last Name</Label>
                         <Input
-                          id={`lastName-${userType}`}
+                          id={`lastName-${role}`}
                           placeholder="Doe"
                           value={formData.last_name}
                           onChange={(e) =>
@@ -220,11 +232,11 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor={`email-${userType}`}>Email</Label>
+                      <Label htmlFor={`email-${role}`}>Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          id={`email-${userType}`}
+                          id={`email-${role}`}
                           type="email"
                           placeholder="john@example.com"
                           value={formData.email}
@@ -242,11 +254,11 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor={`phone-${userType}`}>Phone Number</Label>
+                      <Label htmlFor={`phone-${role}`}>Phone Number</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          id={`phone-${userType}`}
+                          id={`phone-${role}`}
                           type="tel"
                           placeholder="+1 (555) 123-4567"
                           value={formData.phone}
@@ -264,11 +276,11 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor={`password-${userType}`}>Password</Label>
+                      <Label htmlFor={`password-${role}`}>Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          id={`password-${userType}`}
+                          id={`password-${role}`}
                           type={showPassword ? "text" : "password"}
                           placeholder="Create a strong password"
                           value={formData.password}
@@ -299,13 +311,13 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor={`confirmPassword-${userType}`}>
+                      <Label htmlFor={`confirmPassword-${role}`}>
                         Confirm Password
                       </Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          id={`confirmPassword-${userType}`}
+                          id={`confirmPassword-${role}`}
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirm your password"
                           value={formData.confirmPassword}
@@ -340,7 +352,7 @@ export default function Register() {
                     <div className="space-y-3">
                       <div className="flex items-start space-x-2">
                         <Checkbox
-                          id={`terms-${userType}`}
+                          id={`terms-${role}`}
                           checked={formData.agreeToTerms}
                           onCheckedChange={(checked) =>
                             handleInputChange("agreeToTerms", checked === true)
@@ -348,7 +360,7 @@ export default function Register() {
                           required
                         />
                         <Label
-                          htmlFor={`terms-${userType}`}
+                          htmlFor={`terms-${role}`}
                           className="text-sm leading-relaxed"
                         >
                           I agree to the{" "}
@@ -370,7 +382,7 @@ export default function Register() {
 
                       <div className="flex items-start space-x-2">
                         <Checkbox
-                          id={`marketing-${userType}`}
+                          id={`marketing-${role}`}
                           checked={formData.agreeToMarketing}
                           onCheckedChange={(checked) =>
                             handleInputChange(
@@ -380,7 +392,7 @@ export default function Register() {
                           }
                         />
                         <Label
-                          htmlFor={`marketing-${userType}`}
+                          htmlFor={`marketing-${role}`}
                           className="text-sm leading-relaxed"
                         >
                           I'd like to receive job alerts and career tips via
@@ -397,7 +409,7 @@ export default function Register() {
                       {loading
                         ? "Creating Account..."
                         : `Create ${
-                            userType === "candidate" ? "Job Seeker" : "Employer"
+                            role === "candidate" ? "Job Seeker" : "Employer"
                           } Account`}
                     </Button>
                   </form>
