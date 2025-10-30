@@ -1,18 +1,31 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from "react";
 // PRODUCTION: Uncomment these imports for Supabase auth
 // import { User, Session } from '@supabase/supabase-js';
 // import { supabase } from '@/integrations/supabase/client';
 
 // DEVELOPMENT: Mock auth imports (REMOVE IN PRODUCTION)
-import { MockUser, mockSignIn, mockSignUp, mockSignOut, getCurrentMockUser } from '@/lib/mockAuth';
+import {
+  MockUser,
+  mockSignIn,
+  mockSignUp,
+  mockSignOut,
+  getCurrentMockUser,
+} from "@/lib/mockAuth";
+import { API_USER } from "@/lib/api";
+import axiosClient from "@/axios/axiosClient";
+import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   // DEVELOPMENT: Using MockUser type (CHANGE TO User | null IN PRODUCTION)
-  user: MockUser | null;
+  user: User | null;
   session: any; // PRODUCTION: Change back to Session | null
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    userData?: any
+  ) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   userProfile: any;
 }
@@ -22,14 +35,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   // DEVELOPMENT: Using MockUser (CHANGE TO User | null IN PRODUCTION)
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<any>(null); // PRODUCTION: Change to Session | null
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -95,13 +110,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, userData?: any) => {
-    const { user: mockUser, error } = await mockSignUp(email, password, userData);
-    if (mockUser) {
-      setUser(mockUser);
-      setUserProfile(mockUser.profile);
-      setSession({ user: mockUser });
+    let error: any = null;
+    try {
+      const response = await axiosClient.post(API_USER.REGISTER, {
+        email,
+        password,
+        password_confirmation: password,
+        ...userData,
+      });
+      console.log(response.status, response.data);
+    } catch (err) {
+      console.log(err);
+      // if (err?.status === 422) {
+      // console.log(err?.errors);
+      error = err?.errors;
+      // }
+      return { error: err?.errors };
     }
-    return { error };
+
+    // const { user: mockUser, error } = await mockSignUp(email, password, userData);
+    // if (mockUser) {
+    //   setUser(mockUser);
+    //   setUserProfile(mockUser.profile);
+    //   setSession({ user: mockUser });
+    // }
+    // return { error };
   };
 
   const signOut = async () => {
