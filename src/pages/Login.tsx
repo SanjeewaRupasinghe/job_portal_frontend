@@ -5,10 +5,25 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, Mail, Lock, Briefcase, Building2, Shield } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  Briefcase,
+  Building2,
+  Shield,
+} from "lucide-react";
+import { validateIsNotEmpty } from "@/lib/validate";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,18 +34,27 @@ export default function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    const isValid = validateForm();
+    if (!isValid){
+      setLoading(false);
+      return;
+    } 
 
-    console.log(email, password);
-    
-    
     try {
       const { error } = await signIn(email, password);
       if (error) {
         console.log(error);
-        toast.error(error);
+        setErrors(error?.errors);
+        toast.error(error?.message);
       } else {
         toast.success("Logged in successfully!");
         navigate("/");
@@ -42,12 +66,30 @@ export default function Login() {
     }
   };
 
+  const validateForm = () => {
+    const emailError = validateIsNotEmpty(email);
+    const passwordError = validateIsNotEmpty(password);
+
+    if (emailError || passwordError) {
+      setErrors({
+        email: emailError,
+        password: passwordError,
+      });
+      return false;
+    }
+    return true;
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to your account to continue</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Welcome Back
+          </h1>
+          <p className="text-muted-foreground">
+            Sign in to your account to continue
+          </p>
         </div>
 
         <Card className="shadow-soft-lg">
@@ -60,11 +102,17 @@ export default function Login() {
           <CardContent>
             <Tabs defaultValue="candidate" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="candidate" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="candidate"
+                  className="flex items-center gap-2"
+                >
                   <Briefcase className="h-4 w-4" />
                   <span className="hidden sm:inline">Candidate</span>
                 </TabsTrigger>
-                <TabsTrigger value="employer" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="employer"
+                  className="flex items-center gap-2"
+                >
                   <Building2 className="h-4 w-4" />
                   <span className="hidden sm:inline">Employer</span>
                 </TabsTrigger>
@@ -76,7 +124,12 @@ export default function Login() {
 
               {["candidate", "employer", "admin"].map((role) => (
                 <TabsContent key={role} value={role} className="space-y-4 mt-6">
-                  <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => handleSubmit(e)} className="space-y-4">
+                  <form
+                    onSubmit={(e: React.FormEvent<HTMLFormElement>) =>
+                      handleSubmit(e)
+                    }
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor={`email-${role}`}>Email</Label>
                       <div className="relative">
@@ -88,8 +141,12 @@ export default function Login() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="pl-10"
-                          required
                         />
+                        {errors.email && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.email}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -104,8 +161,12 @@ export default function Login() {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           className="pl-10 pr-10"
-                          required
                         />
+                        {errors.password && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.password}
+                          </p>
+                        )}
                         <Button
                           type="button"
                           variant="ghost"
@@ -127,22 +188,34 @@ export default function Login() {
                         <Checkbox
                           id={`remember-${role}`}
                           checked={rememberMe}
-                          onCheckedChange={(checked) => setRememberMe(checked === true)}
+                          onCheckedChange={(checked) =>
+                            setRememberMe(checked === true)
+                          }
                         />
                         <Label htmlFor={`remember-${role}`} className="text-sm">
                           Remember me
                         </Label>
                       </div>
-                      <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                      <Link
+                        to="/forgot-password"
+                        className="text-sm text-primary hover:underline"
+                      >
                         Forgot password?
                       </Link>
                     </div>
 
-                    <Button type="submit" className="w-full bg-primary hover:bg-primary-hover" disabled={loading}>
-                      {loading ? "Signing In..." : `Sign In as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
+                    <Button
+                      type="submit"
+                      className="w-full bg-primary hover:bg-primary-hover"
+                      disabled={loading}
+                    >
+                      {loading
+                        ? "Signing In..."
+                        : `Sign In as ${
+                            role.charAt(0).toUpperCase() + role.slice(1)
+                          }`}
                     </Button>
                   </form>
-
                 </TabsContent>
               ))}
             </Tabs>
@@ -152,7 +225,10 @@ export default function Login() {
         <div className="text-center mt-6">
           <p className="text-muted-foreground">
             Don't have an account?{" "}
-            <Link to="/register" className="text-primary hover:underline font-medium">
+            <Link
+              to="/register"
+              className="text-primary hover:underline font-medium"
+            >
               Sign up here
             </Link>
           </p>
